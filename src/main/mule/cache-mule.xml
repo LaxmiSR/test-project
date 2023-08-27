@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="3f51c068-854d-4d24-b0fb-041ffb0be832" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="ff25d1a1-54e3-4781-8faf-2a04e940d604" entryTtl="24" entryTtlUnit="HOURS" expirationIntervalUnit="HOURS" />
+	<ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="bfb1970c-de9d-463b-8a39-659767f4e84b" keyGenerationExpression="#[attributes.uriParams.id]" objectStore="Object_store" />
+	<flow name="cache-muleFlow" doc:id="35150a0a-4caa-44f3-8fad-444b99a0c82f" >
+		<http:listener doc:name="Listener" doc:id="ee9c30e9-6d5f-49d8-86df-35a012b73eb9" config-ref="HTTP_Listener_config" path="/test/{id}"/>
+		<logger level="INFO" doc:name="Logger" doc:id="5101816b-96a2-4d68-a336-af20b6273e03" />
+		<ee:cache doc:name="Cache" doc:id="3531b282-358c-4814-ac69-c8969065c581" cachingStrategy-ref="Caching_Strategy">
+			<http:request method="GET" doc:name="Request" doc:id="34e163b3-67cb-4776-88ff-73066e030327" url="https://reqres.in/api/users/{id}" >
+				<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	id : attributes.uriParams.id
+}]]]></http:uri-params>
+			</http:request>
+		</ee:cache>
+		<logger level="INFO" doc:name="Logger" doc:id="18eb06af-6f0b-4bbc-96bb-bb377c11b253" />
+		<os:clear doc:name="Clear" doc:id="b6146f91-5bc3-4a54-a5a1-ffc7baab1134" objectStore="Object_store"/>
+	</flow>
+</mule>
